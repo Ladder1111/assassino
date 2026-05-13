@@ -1,11 +1,1203 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="it">
 <head>
-<title>Our Funky HTML Page</title>
-<meta name="description" content="Our first page">
-<meta name="keywords" content="html tutorial template">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>L'Assassino — Investigazione</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #090c10;
+      --surface: #111519;
+      --card: #161c24;
+      --border: #212b38;
+      --border-dim: #181f2a;
+      --red: #8b1a2a;
+      --red-mid: #b02235;
+      --ev: #f5c518;
+      --ev-dim: #c9a014;
+      --cream: #ddd3bc;
+      --cream-dim: #a89880;
+      --muted: #4e5a6a;
+      --white: #ede5d0;
+      --green: #27ae60;
+      --mono: 'Courier New', Courier, monospace;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--cream);
+      overflow-x: hidden;
+    }
+
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .view { display: none; flex-direction: column; min-height: 100vh; animation: fadeIn 0.3s ease; }
+    .view.active { display: flex; }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* ── CRIME TAPE ── */
+    .crime-tape {
+      height: 22px; background: var(--ev);
+      display: flex; align-items: center; overflow: hidden; flex-shrink: 0;
+    }
+    .crime-tape-inner {
+      white-space: nowrap;
+      font-size: 0.48rem; font-weight: 900; letter-spacing: 0.2em;
+      color: #111; text-transform: uppercase; font-family: var(--mono);
+      animation: tapeScroll 22s linear infinite; padding: 0 12px;
+    }
+    @keyframes tapeScroll { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+
+    .crime-tape.sm { height: 17px; }
+    .crime-tape.sm .crime-tape-inner { font-size: 0.42rem; letter-spacing: 0.16em; }
+
+    /* ── FINGERPRINT WATERMARK ── */
+    .fp-bg {
+      position: absolute; pointer-events: none; z-index: 0;
+      font-size: 200px; line-height: 1;
+      color: rgba(255,255,255,0.02);
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 15px 20px;
+      border: none; border-radius: 2px;
+      font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; text-align: center;
+      transition: all 0.18s; letter-spacing: 0.03em;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary   { background: var(--red-mid); color: var(--white); }
+    .btn-primary:active  { background: var(--red); transform: scale(0.98); }
+    .btn-secondary { background: transparent; color: var(--cream-dim); border: 1px solid var(--border); }
+    .btn-secondary:active { background: var(--surface); transform: scale(0.98); }
+    .btn-ev { background: var(--ev); color: #111; font-weight: 700; }
+    .btn-ev:active { background: var(--ev-dim); transform: scale(0.98); }
+
+    .mono { font-family: var(--mono); }
+    .tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; padding: 3px 8px; border-radius: 2px;
+      border: 1px solid currentColor; font-family: var(--mono);
+    }
+    .tag-red    { color: var(--red-mid);  border-color: var(--red-mid); }
+    .tag-yellow { color: var(--ev);       border-color: var(--ev); }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.82rem; color: var(--muted); cursor: pointer; margin-bottom: 14px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .back-link:active { color: var(--cream); }
+
+    .field-label {
+      display: block; font-size: 0.58rem; letter-spacing: 0.18em;
+      color: var(--ev); text-transform: uppercase; font-weight: 700;
+      margin-bottom: 10px; font-family: var(--mono);
+    }
+    .page-header { padding: 40px 22px 18px; border-bottom: 1px solid var(--border); }
+    .page-footer { padding: 0 22px 44px; }
+
+    /* ══════════════ HOME ══════════════ */
+    #view-home { position: relative; overflow: hidden; }
+
+    .home-inner {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      flex: 1; padding: 0 22px 36px;
+    }
+
+    .home-hero { padding-top: 44px; text-align: center; }
+
+    .home-search-icon {
+      font-size: 3.2rem; color: var(--ev);
+      display: block; margin-bottom: 14px;
+      text-shadow: 0 0 40px rgba(245,197,24,0.35);
+      animation: breathe 3s ease-in-out infinite;
+    }
+    @keyframes breathe { 0%,100% { text-shadow: 0 0 30px rgba(245,197,24,.25); } 50% { text-shadow: 0 0 60px rgba(245,197,24,.55); } }
+
+    .home-eyebrow {
+      font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.26em;
+      color: var(--muted); text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    .logo {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 2.9rem; color: var(--white); line-height: 1; margin-bottom: 5px;
+      text-shadow: 0 2px 32px rgba(176,34,53,.55);
+    }
+    .logo span { color: var(--red-mid); }
+
+    .logo-sub {
+      font-family: var(--mono); font-size: 0.63rem; color: var(--muted);
+      letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 28px;
+    }
+
+    /* Evidence board */
+    .ev-board {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 2px; margin: 0 0 6px; position: relative; overflow: hidden;
+    }
+    .ev-board::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--red-mid); }
+
+    .ev-board-hdr {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 14px 9px; border-bottom: 1px solid var(--border-dim);
+    }
+    .ev-board-hdr-label {
+      font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.16em;
+      color: var(--ev); text-transform: uppercase; font-weight: 700;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .ev-board-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-dim); }
+    .board-pin {
+      background: var(--card); padding: 11px 12px; position: relative;
+    }
+    .board-pin::before {
+      content:''; position:absolute; top:0; left:11px;
+      width:7px; height:7px; background:var(--red-mid);
+      border-radius:50%; transform:translateY(-50%);
+    }
+    .pin-cat {
+      font-family: var(--mono); font-size: 0.5rem; color: var(--ev);
+      text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; margin-bottom: 3px;
+    }
+    .board-pin p { font-size: 0.72rem; color: var(--cream-dim); line-height: 1.4; }
+
+    .conf-stamp {
+      position: absolute; bottom: 10px; right: 10px;
+      border: 1.5px solid rgba(176,34,53,.5); color: rgba(176,34,53,.55);
+      padding: 2px 8px; font-family: var(--mono);
+      font-size: 0.48rem; letter-spacing: 0.18em;
+      text-transform: uppercase; font-weight: 700; transform: rotate(-8deg);
+    }
+
+    .home-payoff {
+      text-align: center; font-family: Georgia, serif; font-style: italic;
+      font-size: 0.9rem; color: var(--cream-dim); line-height: 1.65; margin-bottom: 14px;
+    }
+    .home-cta { margin-top: auto; padding-top: 18px; display: flex; flex-direction: column; gap: 9px; }
+
+    /* ══════════════ HOW TO PLAY ══════════════ */
+    .htp-steps { padding: 22px; flex: 1; }
+    .step-item { display: flex; gap: 16px; margin-bottom: 26px; }
+    .step-num {
+      flex-shrink: 0; width: 36px; height: 36px;
+      border-radius: 50%; border: 1.5px solid var(--red-mid);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 1rem; color: var(--red-mid); margin-top: 2px;
+    }
+    .step-text h3 { font-size: 0.98rem; color: var(--white); margin-bottom: 4px; }
+    .step-text p  { font-size: 0.86rem; color: var(--cream-dim); line-height: 1.55; }
+
+    /* ══════════════ DIFFICULTY ══════════════ */
+    .diff-body { padding: 0 22px; flex: 1; overflow-y: auto; }
+
+    .case-preview-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-left: 3px solid var(--ev); border-radius: 2px;
+      padding: 13px 15px; margin-bottom: 18px;
+    }
+    .case-preview-label {
+      font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.14em;
+      color: var(--ev); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .case-preview-title { font-family: Georgia, serif; font-size: 1.05rem; color: var(--white); }
+    .case-preview-num { font-size: 0.74rem; color: var(--muted); margin-top: 3px; }
+
+    .diff-opt {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 2px; padding: 15px; margin-bottom: 10px;
+      cursor: pointer; transition: all 0.18s; -webkit-tap-highlight-color: transparent;
+    }
+    .diff-opt.selected { border-color: var(--ev); background: rgba(245,197,24,.05); }
+    .diff-opt:active { transform: scale(0.99); }
+    .diff-opt-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+    .diff-opt-name { font-size: 0.98rem; font-weight: 700; color: var(--white); }
+    .diff-opt.selected .diff-opt-name { color: var(--ev); }
+    .diff-badge {
+      font-family: var(--mono); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 3px 8px; border-radius: 2px;
+    }
+    .badge-easy   { background: rgba(39,174,96,.15);  color: #27ae60; }
+    .badge-normal { background: rgba(245,197,24,.12); color: var(--ev); }
+    .badge-hard   { background: rgba(139,26,42,.2);   color: var(--red-mid); }
+    .diff-opt-desc { font-size: 0.82rem; color: var(--cream-dim); line-height: 1.5; }
+    .diff-opt-meta { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); margin-top: 8px; }
+
+    /* ══════════════ CASE ══════════════ */
+    #view-case { height: 100vh; display: none; flex-direction: column; }
+    #view-case.active { display: flex; }
+
+    .case-header { background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .case-header-body { padding: 11px 15px 10px; }
+
+    .case-hdr-row1 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .case-file-id {
+      font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.18em;
+      color: var(--ev); text-transform: uppercase; font-weight: 700;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .case-hdr-right { display: flex; align-items: center; gap: 8px; }
+
+    .timer-pill {
+      display: flex; align-items: center; gap: 5px;
+      font-family: var(--mono); font-size: 0.92rem; font-weight: 700;
+      padding: 4px 10px; border-radius: 2px; border: 1px solid;
+    }
+    .timer-dot { width: 6px; height: 6px; border-radius: 50%; animation: blink 1.1s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .t-easy   { color: #27ae60; border-color: rgba(39,174,96,.3); }
+    .t-normal { color: var(--ev);      border-color: rgba(245,197,24,.3); }
+    .t-hard   { color: var(--red-mid); border-color: rgba(176,34,53,.4); }
+    .td-easy   { background: #27ae60; }
+    .td-normal { background: var(--ev); }
+    .td-hard   { background: var(--red-mid); }
+
+    .abort-btn {
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 2px; padding: 5px 10px;
+      color: var(--muted); font-size: 0.72rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+      display: flex; align-items: center; gap: 5px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .abort-btn:active { color: var(--red-mid); border-color: var(--red-mid); }
+
+    .case-hdr-row2 { display: flex; justify-content: space-between; align-items: center; }
+    .case-title { font-family: Georgia, serif; font-size: 1rem; color: var(--white); }
+    .diff-pill-sm {
+      font-family: var(--mono); font-size: 0.54rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 2px;
+    }
+
+    .case-body { flex: 1; overflow-y: auto; padding: 16px 16px 8px; }
+
+    /* Case description box */
+    .case-file-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 2px; padding: 15px 17px; margin-bottom: 18px; position: relative;
+    }
+    .case-file-box::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: var(--red-mid); border-radius: 2px 0 0 2px;
+    }
+    .case-file-hdr {
+      display: flex; align-items: center; gap: 7px; margin-bottom: 11px; padding-left: 8px;
+    }
+    .case-file-hdr-label {
+      font-family: var(--mono); font-size: 0.54rem; letter-spacing: 0.18em;
+      color: var(--red-mid); text-transform: uppercase; font-weight: 700;
+    }
+    .case-desc-text { padding-left: 8px; font-size: 0.87rem; color: var(--cream); line-height: 1.82; }
+    .case-desc-text p { margin-bottom: 11px; }
+    .case-desc-text p:last-child { margin-bottom: 0; }
+
+    /* Evidence section */
+    .ev-section-hdr { display: flex; align-items: center; gap: 8px; margin-bottom: 11px; }
+    .ev-section-label {
+      font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.16em;
+      color: var(--ev); text-transform: uppercase; font-weight: 700;
+    }
+    .ev-section-count { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
+
+    .ev-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+
+    /* Sealed evidence */
+    .ev-sealed {
+      background: var(--surface); border: 1px dashed rgba(33,43,56,.9);
+      border-radius: 2px; padding: 13px 15px;
+      display: flex; align-items: center; gap: 13px;
+      position: relative; overflow: hidden;
+    }
+    .ev-sealed::after {
+      content: ''; position: absolute; inset: 0;
+      background: repeating-linear-gradient(-52deg,
+        transparent, transparent 7px,
+        rgba(255,255,255,0.014) 7px, rgba(255,255,255,0.014) 8px);
+    }
+    .ev-sealed-icon { font-size: 1.3rem; color: var(--border); flex-shrink: 0; }
+    .ev-sealed-body { flex: 1; }
+    .ev-sealed-num {
+      font-family: var(--mono); font-size: 0.54rem; letter-spacing: 0.14em;
+      color: var(--muted); text-transform: uppercase; font-weight: 700; margin-bottom: 3px;
+    }
+    .ev-sealed-text { font-size: 0.76rem; color: var(--muted); }
+    .ev-sealed-stamp {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%) rotate(-15deg);
+      border: 1.5px solid rgba(139,26,42,.4); color: rgba(176,34,53,.45);
+      padding: 2px 7px; font-family: var(--mono);
+      font-size: 0.48rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700;
+    }
+
+    /* Open evidence */
+    .ev-open {
+      background: rgba(245,197,24,0.04);
+      border: 1px solid rgba(245,197,24,0.28);
+      border-radius: 2px; padding: 14px 15px;
+      display: flex; align-items: flex-start; gap: 13px;
+      animation: evReveal 0.38s ease;
+    }
+    @keyframes evReveal { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+
+    .ev-badge {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--ev); color: #111;
+      font-size: 0.7rem; font-weight: 900; font-family: var(--mono);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .ev-open-body { flex: 1; }
+    .ev-open-label {
+      font-family: var(--mono); font-size: 0.54rem; letter-spacing: 0.14em;
+      color: var(--ev); text-transform: uppercase; font-weight: 700;
+      margin-bottom: 6px; display: flex; align-items: center; gap: 5px;
+    }
+    .ev-open-text {
+      font-family: var(--mono); font-size: 0.83rem; color: var(--cream); line-height: 1.58;
+    }
+
+    /* ── CASE FOOTER ── */
+    .case-footer {
+      flex-shrink: 0; background: var(--bg);
+      border-top: 1px solid var(--border);
+      padding: 10px 15px 26px; display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .clue-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 2px; padding: 12px 15px;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; transition: all 0.18s; -webkit-tap-highlight-color: transparent;
+    }
+    .clue-btn:not(.exhausted):active { background: var(--card); transform: scale(0.99); }
+    .clue-btn.exhausted { opacity: 0.32; pointer-events: none; }
+    .clue-btn-l { display: flex; align-items: center; gap: 10px; }
+    .clue-btn-ico { font-size: 1.1rem; color: var(--ev); }
+    .clue-btn-lbl { font-size: 0.9rem; font-weight: 600; color: var(--cream); }
+    .clue-btn-rem {
+      font-family: var(--mono); font-size: 0.68rem; color: var(--muted);
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2px 10px;
+    }
+
+    .reader-row {
+      background: transparent; border: 1px dashed var(--border);
+      border-radius: 2px; padding: 10px 15px;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; transition: all 0.18s; -webkit-tap-highlight-color: transparent;
+    }
+    .reader-row:active { background: var(--surface); }
+    .reader-row-l { display: flex; align-items: center; gap: 10px; }
+    .reader-row-ico { font-size: 0.95rem; color: var(--muted); }
+    .reader-row-lbl { font-size: 0.84rem; font-weight: 600; color: var(--muted); }
+    .reader-row-badge {
+      font-family: var(--mono); font-size: 0.54rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 2px; border: 1px solid var(--border); color: var(--muted);
+    }
+
+    .done-btn {
+      background: var(--ev); color: #111;
+      border: none; border-radius: 2px; padding: 14px;
+      font-size: 0.95rem; font-weight: 700; letter-spacing: 0.03em;
+      cursor: pointer; transition: all 0.18s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .done-btn:active { background: var(--ev-dim); transform: scale(0.98); }
+
+    /* ══════════════ CANCEL CONFIRM ══════════════ */
+    .confirm-overlay {
+      position: fixed; inset: 0; z-index: 400;
+      background: rgba(5,8,12,.92);
+      display: flex; align-items: flex-end;
+      animation: fadeIn 0.2s ease;
+    }
+    .confirm-sheet {
+      background: var(--surface); border: 1px solid var(--border);
+      border-top: 3px solid var(--red-mid);
+      border-radius: 4px 4px 0 0; padding: 26px 22px 42px;
+      width: 100%; max-width: 480px; margin: 0 auto;
+      animation: slideUp 0.22s ease;
+    }
+    @keyframes slideUp { from { transform:translateY(28px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+    .confirm-title { font-family: Georgia, serif; font-size: 1.2rem; color: var(--white); margin-bottom: 7px; }
+    .confirm-desc { font-size: 0.83rem; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+    .confirm-timer {
+      font-family: var(--mono); font-size: 0.8rem; color: var(--muted);
+      margin-bottom: 20px; display: flex; align-items: center; gap: 6px;
+    }
+    .confirm-btns { display: flex; flex-direction: column; gap: 9px; }
+
+    /* ══════════════ READER OVERLAY ══════════════ */
+    .reader-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: var(--bg); display: flex; flex-direction: column;
+      animation: fadeIn 0.25s ease;
+      max-width: 480px; left: 50%; transform: translateX(-50%);
+    }
+    .ro-header {
+      padding: 16px 18px 12px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    .ro-meta { display: flex; flex-direction: column; gap: 3px; }
+    .ro-eyebrow {
+      font-family: var(--mono); font-size: 0.54rem; letter-spacing: 0.18em;
+      color: var(--red-mid); text-transform: uppercase; font-weight: 700;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .ro-title { font-family: Georgia, serif; font-size: 0.98rem; color: var(--white); }
+    .ro-timer { font-family: var(--mono); font-size: 0.92rem; font-weight: 700; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .ro-body { flex: 1; overflow-y: auto; padding: 20px 18px; }
+    .ro-classified {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+    }
+    .ro-line { flex: 1; height: 1px; background: rgba(176,34,53,.3); }
+    .ro-stamp {
+      font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.2em;
+      color: rgba(176,34,53,.65); text-transform: uppercase; font-weight: 700;
+      border: 1.5px solid rgba(176,34,53,.4); padding: 3px 10px;
+    }
+    .ro-text {
+      font-family: var(--mono); font-size: 0.88rem; color: var(--cream); line-height: 1.85;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 2px; padding: 18px; position: relative;
+    }
+    .ro-text::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: var(--red-mid); border-radius: 2px 0 0 2px;
+    }
+    .ro-footer {
+      padding: 10px 18px 30px; flex-shrink: 0; border-top: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .ro-note {
+      font-size: 0.7rem; color: var(--muted);
+      text-align: center; line-height: 1.5; font-family: var(--mono);
+    }
+    .ro-close {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 2px; padding: 13px;
+      font-size: 0.88rem; font-weight: 600; color: var(--cream);
+      cursor: pointer; text-align: center; transition: all 0.18s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ro-close:active { background: var(--card); }
+
+    /* ══════════════ CASES LIBRARY ══════════════ */
+    .cases-stats-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 22px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .csb-label { font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
+    .csb-val { font-size: 0.8rem; color: var(--cream-dim); }
+
+    .cases-body { padding: 14px 20px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 11px; }
+
+    .case-lib-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 2px; padding: 15px; position: relative; overflow: hidden;
+    }
+    .case-lib-card.done { border-color: rgba(245,197,24,.3); }
+    .case-lib-card.done::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: var(--ev);
+    }
+    .cl-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .cl-num {
+      font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.14em;
+      color: var(--ev); text-transform: uppercase; font-weight: 700;
+    }
+    .cl-badge {
+      font-family: var(--mono); font-size: 0.54rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 2px;
+    }
+    .cl-badge-done { background: rgba(39,174,96,.12); color: #27ae60; }
+    .cl-badge-todo { color: var(--muted); border: 1px solid var(--border); }
+    .cl-title { font-family: Georgia, serif; font-size: 0.98rem; color: var(--white); margin-bottom: 4px; }
+    .cl-teaser {
+      font-size: 0.77rem; color: var(--muted); line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 13px;
+    }
+    .cl-bottom { display: flex; align-items: center; justify-content: space-between; }
+    .cl-result { display: flex; align-items: center; gap: 9px; }
+    .cl-time { font-family: var(--mono); font-size: 0.78rem; color: var(--cream-dim); display: flex; align-items: center; gap: 4px; }
+    .cl-stars { font-size: 0.78rem; color: var(--ev); }
+    .cl-diff { font-family: var(--mono); font-size: 0.54rem; color: var(--muted); border: 1px solid var(--border); padding: 1px 7px; border-radius: 2px; }
+    .cl-play {
+      font-family: var(--mono); font-size: 0.73rem; font-weight: 700; color: var(--ev);
+      border: 1px solid rgba(245,197,24,.3); border-radius: 2px;
+      padding: 6px 13px; background: transparent;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s; white-space: nowrap;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .cl-play:active { background: rgba(245,197,24,.07); }
+
+    /* ══════════════ REVEAL ══════════════ */
+    #view-reveal { position: relative; overflow: hidden; }
+    #view-reveal::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center top, rgba(139,26,42,.14) 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    .reveal-content { position: relative; z-index: 1; padding: 42px 22px 44px; display: flex; flex-direction: column; min-height: 100vh; }
+    .reveal-top { text-align: center; margin-bottom: 22px; }
+
+    .rv-time-row {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 2px; padding: 7px 16px; margin-bottom: 16px;
+    }
+    .rv-time-lbl { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+    .rv-time-val { font-family: var(--mono); font-size: 1.22rem; font-weight: 700; color: var(--white); }
+
+    .rv-stars { font-size: 1.35rem; margin-bottom: 8px; color: var(--ev); }
+    .rv-title { font-family: Georgia, serif; font-size: 1.6rem; color: var(--white); margin-bottom: 4px; }
+    .rv-title.great { color: #27ae60; } .rv-title.good { color: var(--ev); } .rv-title.ok { color: var(--cream-dim); }
+    .rv-sub { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
+
+    .solution-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 2px; padding: 18px; margin-bottom: 13px; position: relative;
+    }
+    .solution-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--ev); }
+    .solution-lbl {
+      font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.14em;
+      color: var(--ev); text-transform: uppercase; font-weight: 700; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .solution-text { font-family: var(--mono); font-size: 0.87rem; color: var(--cream); line-height: 1.82; }
+
+    .stats-row { display: flex; gap: 8px; margin-bottom: 26px; }
+    .stat-box { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 11px; text-align: center; }
+    .stat-lbl { font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
+    .stat-val { font-family: Georgia, serif; font-size: 1.12rem; color: var(--white); }
+    .reveal-actions { margin-top: auto; display: flex; flex-direction: column; gap: 9px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 78px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 2px; padding: 9px 20px;
+      font-family: var(--mono); font-size: 0.8rem; color: var(--cream);
+      opacity: 0; transition: all 0.25s; z-index: 200;
+      white-space: nowrap; pointer-events: none;
+      max-width: calc(100vw - 48px); text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (min-width: 480px) { #app { border-left: 1px solid var(--border); border-right: 1px solid var(--border); } }
+    @media (min-width: 768px) {
+      body { background: #050709; display: flex; align-items: flex-start; justify-content: center; padding: 40px 0; }
+      #app { min-height: calc(100vh - 80px); border-radius: 4px; overflow: hidden; box-shadow: 0 20px 80px rgba(0,0,0,.75); }
+      #view-case { height: calc(100vh - 80px); }
+    }
+  </style>
 </head>
 <body>
-test hosting sogni di periferia
+<div id="app">
+
+  <!-- ════ HOME ════ -->
+  <section id="view-home" class="view active">
+    <div class="crime-tape"><span class="crime-tape-inner">CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · </span></div>
+
+    <i class="bi bi-fingerprint fp-bg" style="right:-55px; top:70px;"></i>
+    <i class="bi bi-fingerprint fp-bg" style="left:-70px; bottom:100px; font-size:170px;"></i>
+
+    <div class="home-inner">
+      <div class="home-hero">
+        <i class="bi bi-search home-search-icon"></i>
+        <div class="home-eyebrow">Dossier Riservato — Serie I</div>
+        <div class="logo">L'<span>Assassino</span></div>
+        <div class="logo-sub">Party Game Investigativo</div>
+
+        <div class="ev-board">
+          <div class="ev-board-hdr">
+            <span class="ev-board-hdr-label"><i class="bi bi-pin-map-fill"></i> Evidence Board — Caso Aperto</span>
+            <span class="tag tag-red"><i class="bi bi-exclamation-triangle-fill"></i> Classified</span>
+          </div>
+          <div class="ev-board-grid">
+            <div class="board-pin"><div class="pin-cat">Vittima</div><p>Trovata morta in stanza chiusa dall'interno.</p></div>
+            <div class="board-pin"><div class="pin-cat">Arma</div><p>Nessuna traccia. Nessuna porta aperta.</p></div>
+            <div class="board-pin"><div class="pin-cat">Movente</div><p>Tre sospettati. Alibi perfetti.</p></div>
+            <div class="board-pin"><div class="pin-cat">Anomalia</div><p>Il caffè sul tavolo era ancora caldo.</p></div>
+          </div>
+          <div class="conf-stamp">Confidential</div>
+        </div>
+      </div>
+
+      <div class="home-cta">
+        <p class="home-payoff">"Un caso impossibile. Un colpevole nascosto.<br>Scoprite la verità."</p>
+        <button class="btn btn-ev" onclick="showView('difficulty')"><i class="bi bi-folder2-open"></i> Apri il caso</button>
+        <button class="btn btn-secondary" onclick="openCasesView()"><i class="bi bi-collection"></i> Tutti i casi</button>
+        <button class="btn btn-secondary" onclick="showView('howtoplay')"><i class="bi bi-question-circle"></i> Come si gioca</button>
+      </div>
+    </div>
+
+    <div class="crime-tape"><span class="crime-tape-inner">CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · </span></div>
+  </section>
+
+  <!-- ════ HOW TO PLAY ════ -->
+  <section id="view-howtoplay" class="view">
+    <div class="crime-tape sm"><span class="crime-tape-inner">CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · </span></div>
+    <div class="page-header">
+      <div class="back-link" onclick="showView('home')"><i class="bi bi-arrow-left"></i> Torna alla home</div>
+      <span class="tag tag-yellow"><i class="bi bi-book"></i> Istruzioni</span>
+      <h2 style="margin-top:12px; font-family:Georgia,serif; color:var(--white);">Come si gioca</h2>
+    </div>
+    <div class="htp-steps">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <h3>Leggete il caso ad alta voce</h3>
+          <p>Vi viene presentata una scena impossibile con tutti i dettagli. Il gruppo ascolta e inizia a ragionare insieme.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <h3>Sbloccate le prove sigillate</h3>
+          <p>Le prove iniziano sigillate. Quando il gruppo è bloccato, premete la lente per rivelare un nuovo reperto.</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <h3>Premete Completato quando sapete la verità</h3>
+          <p>Il timer si ferma, la soluzione viene rivelata e il gruppo riceve una valutazione su tempo e indizi usati.</p>
+        </div>
+      </div>
+    </div>
+    <div class="page-footer">
+      <button class="btn btn-ev" onclick="showView('difficulty')"><i class="bi bi-folder2-open"></i> Scegli la difficoltà</button>
+    </div>
+  </section>
+
+  <!-- ════ DIFFICULTY ════ -->
+  <section id="view-difficulty" class="view">
+    <div class="crime-tape sm"><span class="crime-tape-inner">CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · </span></div>
+    <div class="page-header">
+      <div class="back-link" onclick="showView('home')"><i class="bi bi-arrow-left"></i> Indietro</div>
+      <span class="tag tag-yellow"><i class="bi bi-shield-shaded"></i> Nuovo caso</span>
+      <h2 style="margin-top:12px; font-family:Georgia,serif; color:var(--white);">Scegli la difficoltà</h2>
+    </div>
+    <div class="diff-body">
+      <div class="case-preview-box" id="diff-case-preview">
+        <div class="case-preview-label"><i class="bi bi-file-earmark-text"></i> Prossimo caso</div>
+        <div class="case-preview-title" id="diff-case-title">La Stanza del Silenzio</div>
+        <div class="case-preview-num" id="diff-case-num">Caso #001 — Serie I</div>
+      </div>
+      <div class="diff-opt selected" id="opt-easy" onclick="selectDiff('easy')">
+        <div class="diff-opt-top"><div class="diff-opt-name">Elementare</div><div class="diff-badge badge-easy">Facile</div></div>
+        <div class="diff-opt-desc">Un indizio è già visibile. Adatto per il primo approccio o gruppi misti.</div>
+        <div class="diff-opt-meta">★ Valutazione base · 1 indizio già sbloccato</div>
+      </div>
+      <div class="diff-opt" id="opt-normal" onclick="selectDiff('normal')">
+        <div class="diff-opt-top"><div class="diff-opt-name">Normale</div><div class="diff-badge badge-normal">Consigliato</div></div>
+        <div class="diff-opt-desc">Il caso parte senza aiuti. Ogni prova va conquistata. Il gruppo deve ragionare insieme.</div>
+        <div class="diff-opt-meta">★★ Valutazione piena · Tutte le prove sigillate</div>
+      </div>
+      <div class="diff-opt" id="opt-hard" onclick="selectDiff('hard')">
+        <div class="diff-opt-top"><div class="diff-opt-name">Esperto</div><div class="diff-badge badge-hard">Difficile</div></div>
+        <div class="diff-opt-desc">Nessun aiuto iniziale, timer sotto pressione. Solo per investigatori navigati.</div>
+        <div class="diff-opt-meta">★★★ Valutazione massima · Tutte le prove sigillate</div>
+      </div>
+    </div>
+    <div class="page-footer" style="padding-top:12px;">
+      <button class="btn btn-ev" onclick="launchCase()"><i class="bi bi-folder2-open"></i> Apri il caso</button>
+    </div>
+  </section>
+
+  <!-- ════ CASE ════ -->
+  <section id="view-case" class="view">
+    <div class="case-header">
+      <div class="crime-tape sm"><span class="crime-tape-inner">CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · </span></div>
+      <div class="case-header-body">
+        <div class="case-hdr-row1">
+          <div class="case-file-id"><i class="bi bi-file-earmark-medical"></i><span id="c-file-num">CASO #001</span></div>
+          <div class="case-hdr-right">
+            <div class="timer-pill t-normal" id="timer-display">
+              <div class="timer-dot td-normal" id="timer-dot"></div>
+              <span id="timer-text">00:00</span>
+            </div>
+            <button class="abort-btn" onclick="showCancelConfirm()"><i class="bi bi-x-circle"></i> Abbandona</button>
+          </div>
+        </div>
+        <div class="case-hdr-row2">
+          <div class="case-title" id="c-title">La Stanza del Silenzio</div>
+          <div class="diff-pill-sm badge-normal" id="c-diff-pill">Normale</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="case-body" id="case-body">
+      <div class="case-file-box">
+        <div class="case-file-hdr">
+          <i class="bi bi-file-earmark-text" style="color:var(--red-mid); font-size:0.9rem;"></i>
+          <span class="case-file-hdr-label">Rapporto Investigativo</span>
+        </div>
+        <div class="case-desc-text" id="c-desc"></div>
+      </div>
+      <div class="ev-section-hdr">
+        <i class="bi bi-search" style="color:var(--ev); font-size:0.88rem;"></i>
+        <span class="ev-section-label">Prove raccolte</span>
+        <span class="ev-section-count" id="ev-count"></span>
+      </div>
+      <div class="ev-list" id="ev-list"></div>
+    </div>
+
+    <div class="case-footer">
+      <div class="clue-btn" id="clue-btn" onclick="revealNextClue()">
+        <div class="clue-btn-l">
+          <i class="bi bi-search clue-btn-ico"></i>
+          <span class="clue-btn-lbl">Svela indizio</span>
+        </div>
+        <span class="clue-btn-rem" id="clue-remaining">3 rimasti</span>
+      </div>
+      <div class="reader-row" onclick="openReaderSolution()">
+        <div class="reader-row-l">
+          <i class="bi bi-eye reader-row-ico"></i>
+          <span class="reader-row-lbl">Leggi la soluzione — solo tu</span>
+        </div>
+        <span class="reader-row-badge">Riservato</span>
+      </div>
+      <button class="done-btn" onclick="completedCase()">
+        <i class="bi bi-check2-circle"></i> Completato — Abbiamo la soluzione
+      </button>
+    </div>
+  </section>
+
+  <!-- ════ REVEAL ════ -->
+  <section id="view-reveal" class="view">
+    <div class="reveal-content">
+      <div class="reveal-top">
+        <div class="rv-time-row">
+          <span class="rv-time-lbl"><i class="bi bi-clock"></i> Tempo</span>
+          <span class="rv-time-val" id="rv-time">00:00</span>
+        </div>
+        <div class="rv-stars" id="rv-stars">★★★★★</div>
+        <div class="rv-title" id="rv-title">Detective Leggendario</div>
+        <div class="rv-sub" id="rv-sub">Caso risolto senza indizi</div>
+      </div>
+
+      <div class="crime-tape" style="margin-bottom:20px;"><span class="crime-tape-inner">CASE CLOSED · CASE CLOSED · CASE CLOSED · CASE CLOSED · CASE CLOSED · CASE CLOSED · CASE CLOSED · CASE CLOSED · CASE CLOSED · CASE CLOSED · CASE CLOSED · CASE CLOSED · CASE CLOSED · </span></div>
+
+      <div class="solution-box">
+        <div class="solution-lbl"><i class="bi bi-unlock-fill"></i> La soluzione del caso</div>
+        <div class="solution-text" id="rv-solution"></div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-box"><div class="stat-lbl">Tempo</div><div class="stat-val" id="rv-stat-time">—</div></div>
+        <div class="stat-box"><div class="stat-lbl">Indizi</div><div class="stat-val" id="rv-stat-clues">—</div></div>
+        <div class="stat-box"><div class="stat-lbl">Livello</div><div class="stat-val" id="rv-stat-diff">—</div></div>
+      </div>
+
+      <div class="reveal-actions">
+        <button class="btn btn-ev" onclick="nextCase()"><i class="bi bi-arrow-right-circle"></i> Nuovo caso</button>
+        <button class="btn btn-secondary" onclick="goHome()"><i class="bi bi-house"></i> Torna alla home</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════ CASES LIBRARY ════ -->
+  <section id="view-cases" class="view">
+    <div class="crime-tape sm"><span class="crime-tape-inner">CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · CRIME SCENE · DO NOT CROSS · </span></div>
+    <div class="page-header">
+      <div class="back-link" onclick="showView('home')"><i class="bi bi-arrow-left"></i> Indietro</div>
+      <span class="tag tag-yellow"><i class="bi bi-collection"></i> Archivio</span>
+      <h2 style="margin-top:12px; font-family:Georgia,serif; color:var(--white);">Tutti i casi</h2>
+    </div>
+    <div class="cases-stats-bar" id="cases-stats-header"></div>
+    <div class="cases-body" id="cases-list"></div>
+  </section>
+
+</div>
+
+<!-- ════ CANCEL CONFIRM ════ -->
+<div class="confirm-overlay" id="cancel-overlay" style="display:none;">
+  <div class="confirm-sheet">
+    <div class="confirm-title">Abbandonare il caso?</div>
+    <div class="confirm-desc">Il progresso e il timer verranno azzerati. Potrai scegliere la difficoltà di nuovo.</div>
+    <div class="confirm-timer" id="cancel-timer-display"><i class="bi bi-clock"></i> Tempo trascorso: 00:00</div>
+    <div class="confirm-btns">
+      <button class="btn btn-primary" onclick="confirmCancel()"><i class="bi bi-x-circle"></i> Sì, abbandona</button>
+      <button class="btn btn-secondary" onclick="dismissCancelConfirm()"><i class="bi bi-arrow-left"></i> Continua l'indagine</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ READER OVERLAY ════ -->
+<div class="reader-overlay" id="reader-overlay" style="display:none;">
+  <div class="ro-header">
+    <div class="ro-meta">
+      <div class="ro-eyebrow"><i class="bi bi-eye-slash"></i> Soluzione — Solo il lettore</div>
+      <div class="ro-title" id="ro-case-title">La Stanza del Silenzio</div>
+    </div>
+    <div class="ro-timer" id="ro-timer"><i class="bi bi-clock"></i> 00:00</div>
+  </div>
+  <div class="ro-body">
+    <div class="ro-classified"><div class="ro-line"></div><div class="ro-stamp">Confidential</div><div class="ro-line"></div></div>
+    <div class="ro-text" id="ro-solution-text"></div>
+  </div>
+  <div class="ro-footer">
+    <div class="ro-note">Leggi la soluzione, poi chiudi e rispondi alle domande del gruppo.<br>Il timer continua a scorrere.</div>
+    <div class="ro-close" onclick="closeReaderSolution()"><i class="bi bi-arrow-left"></i> Torna al caso</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const CASES = [
+    {
+      id: '001', title: 'La Stanza del Silenzio',
+      paragraphs: [
+        'Giovedì 14 novembre, ore 11:30. I soccorritori forzano la porta dell\'appartamento al quinto piano di Via Garibaldi 12, a Torino, dopo che la vicina aveva segnalato tre giorni di silenzio insolito. All\'interno trovano Vera Nolan, 34 anni, grafica freelance, senza vita sul pavimento del soggiorno. Il medico legale stima la morte tra le 2:30 e le 4:00 della notte tra martedì e mercoledì — circa 48 ore prima del ritrovamento.',
+        'La scena è ordinata, quasi innaturalmente. Nessun segno di lotta, nessuna effrazione. Tutte e quattro le finestre sono chiuse con le mandate azionate dall\'interno. La porta d\'ingresso era chiusa a chiave — l\'unica chiave esistente si trovava nel taschino del pigiama della vittima. Le telecamere del corridoio non registrano ingressi o uscite anomale nella notte in questione.',
+        'Il trauma cranico rilevato dall\'autopsia è la causa della morte: un impatto violento alla testa compatibile con una caduta da altezza. Ma nel soggiorno non esiste alcun oggetto o superficie con cui l\'impatto sarebbe potuto avvenire in quel modo — nessuno spigolo, nessun piano rialzato, nessuna scala nelle vicinanze del corpo.',
+        'La vicina del piano di sotto, Carla Merini, 58 anni, giura di aver sentito Vera cantare poco prima delle tre di notte — una canzone degli anni Novanta, sempre la stessa. Carla riferisce anche di aver sentito un rumore sordo circa venti minuti dopo. Sul momento non ci aveva fatto caso.'
+      ],
+      clues: [
+        { icon: 'bi-house-door-open', label: 'SOPPALCO — EXHIBIT A', text: 'L\'appartamento includeva un piccolo soppalco raggiungibile con una scala a pioli retraibile, visibile solo dal corridoio interno. I soccorritori non l\'avevano notata al primo ingresso. Sul pavimento del soppalco: una coperta, un libro aperto e le pantofole della vittima.' },
+        { icon: 'bi-droplet-fill',    label: 'GATTO — EXHIBIT B',    text: 'Il gatto di Vera, trovato sul balcone posteriore, era bagnato fradicio — nonostante non piovesse da due giorni. Nel lavatoio del balcone c\'era acqua stagnante, come se qualcuno lo avesse riempito e abbandonato nel mezzo di qualcosa.' },
+        { icon: 'bi-journal-text',   label: 'DIARIO — EXHIBIT C',   text: 'L\'ultima annotazione nel diario di Vera, scritta con grafia irregolare e diversa dal solito: "Stasera ci siamo. Stavolta funziona davvero." La data corrispondeva alla sera prima della morte. Nessuna altra annotazione nelle settimane precedenti.' }
+      ],
+      solution: 'Vera Nolan soffriva di sonnambulismo severo e disturbo dissociativo, condizione mai diagnosticata. Nella notte si era alzata nel sonno, aveva portato il gatto sul balcone bagnandolo nel lavatoio, aveva cantato ad alta voce in stato soporifero — spiegando la testimonianza della vicina — poi aveva salito la scala retraibile del soppalco ancora addormentata. Era caduta dal bordo del soppalco impattando la testa sul corrimano in legno del mezzanino, e scivolata fino al pavimento del soggiorno. La porta era chiusa perché lei stessa l\'aveva chiusa prima di addormentarsi. La nota nel diario riguardava la sua installazione artistica sonora. Nessun responsabile esterno.'
+    },
+    {
+      id: '002', title: 'Il Testimone Invisibile',
+      paragraphs: [
+        'Sabato 8 marzo, ore 23:15. Il personale del Grand Hotel Excelsior di Milano trova il corpo di Marco Ferretti, 61 anni, noto collezionista d\'arte e gallerista, nel bagno privato annesso alla Sala Imperiale. La serata era una cena di gala organizzata dalla fondazione che portava il suo nome: 120 invitati, menu da cinque portate, orchestra dal vivo. L\'evento era iniziato alle 20:00.',
+        'Il primo elemento che sconvolge gli investigatori non è la causa della morte — apparentemente un malore cardiaco — ma la testimonianza dei presenti. Dodici ospiti, tra cui tre senatori e un giudice, giurano di aver visto Marco Ferretti vivo alle 22:00. Alcuni affermano di avergli stretto la mano. Due riferiscono conversazioni di almeno cinque minuti su argomenti specifici.',
+        'Il medico legale è categorico: la morte è avvenuta tra le 20:15 e le 20:45. Marco Ferretti era morto da almeno un\'ora e mezza quando i testimoni lo avrebbero visto camminare tra i tavoli e brindare.',
+        'Eppure i testimoni non mentono — sono stati esaminati separatamente e le dichiarazioni coincidono in ogni dettaglio. Il servizio di sicurezza privata esclude qualunque accesso non autorizzato alla serata. Tutti i presenti erano stati registrati all\'ingresso con documento d\'identità.'
+      ],
+      clues: [
+        { icon: 'bi-watch',        label: 'OROLOGIO — EXHIBIT A', text: 'L\'orologio al polso del defunto — un Patek Philippe da 80.000 euro — era avanzato di novantaquattro minuti rispetto all\'orario reale. La batteria era nuova, sostituita il giorno precedente. Avanzare un orologio di quasi due ore richiede intenzionalità, non un guasto.' },
+        { icon: 'bi-envelope-fill', label: 'BIGLIETTO — EXHIBIT B', text: 'Nel portafoglio del defunto: un foglietto scritto di suo pugno. Il testo recitava: "Non stringere mani. Non mangiare nulla stanotte. Fidati solo di P. Se qualcosa va storto, P sa cosa fare." La calligrafia era ferma, lucida, non scritta di fretta.' },
+        { icon: 'bi-cup-straw',    label: 'CALICE — EXHIBIT C',   text: 'Sul tavolo assegnato a Ferretti: due calici di vino rosso, entrambi parzialmente bevuti. Le impronte del secondo calice appartengono a una persona non identificata — il DNA non corrisponde ad alcun ospite registrato né ad alcun membro del personale.' }
+      ],
+      solution: 'Marco Ferretti aveva un fratello gemello identico, Paolo, la cui esistenza era tenuta segreta da quasi quarant\'anni. I due stavano pianificando una truffa assicurativa: Marco avrebbe dovuto fingere la propria morte, mentre Paolo prendeva il suo posto alla cena costruendo un alibi con dodici testimoni eccellenti. L\'orologio era stato avanzato per spostare il "Marco vivo" oltre la finestra di morte. Ma la truffa si è trasformata in un vero crimine: Marco ha avuto un infarto reale nel momento dell\'entrata in scena di Paolo. Paolo è sparito prima della scoperta del corpo. L\'assicurazione sulla vita ammontava a 4,2 milioni di euro.'
+    },
+    {
+      id: '003', title: 'Le Scarpe Asciutte',
+      paragraphs: [
+        'Lunedì 3 febbraio, ore 17:45. La segretaria di Thomas Reed, dirigente bancario, chiama il 112 dopo che il suo capo non si è fatto vivo per tutta la giornata, nonostante tre riunioni in agenda. Lo trovano nel suo ufficio al dodicesimo piano del palazzo direzionale di Milano. Seduto alla scrivania, come se stesse dormendo. Causa della morte: overdose da benzodiazepine.',
+        'Fuori piove ininterrottamente da quarantasei ore. Le scarpe di Thomas Reed, però, sono perfettamente asciutte. Non solo asciutte — pulite, lustrate, senza la minima traccia di umidità. Il badge aziendale non registra nessun accesso nell\'edificio per tutta la giornata di lunedì. Nessun collega lo ricorda entrare quella mattina.',
+        'L\'autopsia fissa la morte tra le 6:00 e le 10:00 del mattino di lunedì. Ma il sistema dei tornelli, la receptionist, le telecamere dell\'ingresso e quattordici colleghi concordano: Thomas Reed non è mai entrato nell\'edificio quel giorno.',
+        'Eppure era lì. Morto. Alla sua scrivania al dodicesimo piano, con la giacca appesa all\'attaccapanni e la tazza sul tavolo come tutte le mattine.'
+      ],
+      clues: [
+        { icon: 'bi-cup-hot-fill',     label: 'CAFFÈ — EXHIBIT A',       text: 'La macchinetta dell\'ufficio registra una preparazione di caffè espresso alle 07:15 di lunedì. Thomas Reed non beveva mai caffè — allergia documentata alla caffeina, nota a tutti i colleghi da anni. Qualcuno aveva usato quella macchinetta. Non lui.' },
+        { icon: 'bi-camera-video-fill', label: 'VIDEOCAMERA — EXHIBIT B', text: 'Le telecamere mostrano un vuoto di quattro ore: dalle 06:00 alle 10:00. Il sistema non è stato manomesso. Tuttavia ogni lunedì mattina il server esegue un backup automatico che sovrascrive le ultime quattro ore di registrazione — ciclo documentato nel manuale interno, accessibile a tutti i dipendenti.' },
+        { icon: 'bi-bag',              label: 'CAPPOTTO — EXHIBIT C',    text: 'Il cappotto nel guardaroba dell\'ufficio era asciutto ma emanava odore di muffa. Il tessuto era rigido per l\'aria condizionata: rigidità che richiede almeno 48 ore in un ambiente chiuso. Non era il cappotto di un uomo arrivato quella mattina sotto la pioggia.' }
+      ],
+      solution: 'Thomas Reed non era mai uscito dall\'ufficio. Dopo una violenta lite con la moglie la domenica sera, era tornato in ufficio intorno alle 23:00 — accesso registrato dal badge ma non verificato nelle prime 24 ore. Aveva dormito sul divano del suo studio privato. Il caffè delle 7:15 era stato preparato dal collega Renato Ferrara, responsabile del turno mattina. Reed era morto per overdose accidentale: aveva preso il doppio della dose prescritta per gestire l\'ansia post-litigio. Le scarpe erano asciutte perché non era mai uscito. Il badge non registrava l\'accesso di lunedì perché era già dentro.'
+    },
+    {
+      id: '004', title: 'Il Treno delle 22:47',
+      paragraphs: [
+        'Mercoledì 22 ottobre, ore 23:40. Il convoglio notturno Torino-Roma effettua la fermata di Bologna Centrale. Il capotreno trova un passeggero immobile nel compartimento 6 della carrozza 3: Giorgio Taviani, 55 anni, avvocato penalista di Genova. Cappotto abbottonato, valigia in cappelliera, come chi stesse dormendo. Non stava dormendo. Causa del decesso: crisi cardiaca.',
+        'Il biglietto di Taviani era stato acquistato per il treno delle 22:47 da Torino Porta Nuova. Il biglietto non risulta mai obliterato né validato a Torino Porta Nuova. Le telecamere della stazione non mostrano Taviani tra i passeggeri quella sera.',
+        'La figlia è categorica: il padre era a Genova quel giorno. Lo aveva sentito al telefono alle 21:15, e dal rumore di sottofondo riconosceva il bar sotto casa. Torino-Genova sono 170 chilometri. Il treno partiva da Torino. Alle 21:15 Taviani era a Genova.',
+        'Eppure alle 23:40 era morto su quel treno, con un biglietto intestato al suo nome e una valigia piena delle sue cose.'
+      ],
+      clues: [
+        { icon: 'bi-ticket-perforated-fill', label: 'BIGLIETTO — EXHIBIT A', text: 'Il biglietto era stato acquistato con una carta di credito intestata a una società di consulenza con sede a Milano. Taviani non risultava tra i collaboratori di tale società. La prenotazione era stata effettuata da un indirizzo IP registrato a un hotel di Torino, tre giorni prima del viaggio.' },
+        { icon: 'bi-phone-fill',             label: 'TELEFONO — EXHIBIT B',  text: 'Il tabulato conferma la chiamata delle 21:15: durata 4 minuti, agganciata dalla cella del quartiere Marassi di Genova. Ma lo smartphone di Taviani aveva attiva la funzione di trasferimento automatico delle chiamate, impostata il giorno precedente. Non c\'è modo di sapere dove fosse fisicamente il telefono.' },
+        { icon: 'bi-briefcase-fill',         label: 'VALIGIA — EXHIBIT C',   text: 'Nella valigia: sei camicie, due cravatte, un documento d\'identità intestato a "Giulio Traversi", un dossier con 340 pagine di documenti finanziari, e una lettera manoscritta indirizzata alla figlia che cominciava con: "Se stai leggendo questo, significa che ho sbagliato i calcoli."' }
+      ],
+      solution: 'Taviani stava fuggendo. Da mesi collaborava come informatore con una procura su un caso di riciclaggio che coinvolgeva clienti eccellenti del suo studio. Aveva scoperto di essere stato scoperto. La sera del 22 ottobre aveva salutato la figlia per telefono tramite il dispositivo di trasferimento di un complice rimasto a Genova, poi era partito da Torino Porta Susa — fermata successiva, con controlli meno serrati quella sera — con un\'identità falsa verso Roma. La crisi cardiaca lo ha colto sul treno per lo stress delle settimane precedenti. La valigia conteneva le prove di tutto. Il "Giulio Traversi" non è mai arrivato a Roma.'
+    }
+  ];
+
+  const DIFF = {
+    easy:   { label:'Elementare', pill:'badge-easy',   tc:'t-easy',   td:'td-easy',   start:1 },
+    normal: { label:'Normale',    pill:'badge-normal', tc:'t-normal', td:'td-normal', start:0 },
+    hard:   { label:'Esperto',    pill:'badge-hard',   tc:'t-hard',   td:'td-hard',   start:0 }
+  };
+
+  const SCORES = [
+    { stars:'★★★★★', title:'Detective Leggendario', cls:'great', sub:'Caso risolto senza indizi' },
+    { stars:'★★★★☆', title:'Ottimo Investigatore',  cls:'great', sub:'Caso risolto con un solo aiuto' },
+    { stars:'★★★☆☆', title:'Buona Indagine',         cls:'good',  sub:'Il gruppo ha trovato la via' },
+    { stars:'★★☆☆☆', title:'Caso Difficile',         cls:'ok',    sub:'Erano necessari più indizi' },
+    { stars:'★☆☆☆☆', title:'Investigatori in Erba',  cls:'ok',    sub:'Con la pratica si migliora' }
+  ];
+
+  const LETTERS = ['A','B','C','D'];
+
+  let G = { diff:'easy', caseIndex:0, unlockedClues:0, timerSec:0, timerInterval:null, finalTime:0 };
+  const completedCasesData = {};
+
+  // ── NAVIGATION ──
+  function showView(id) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + id).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  // ── DIFFICULTY ──
+  function selectDiff(d) {
+    G.diff = d;
+    ['easy','normal','hard'].forEach(k => document.getElementById('opt-' + k).classList.toggle('selected', k === d));
+  }
+
+  function updateCasePreview() {
+    const c = CASES[G.caseIndex % CASES.length];
+    document.getElementById('diff-case-title').textContent = c.title;
+    document.getElementById('diff-case-num').textContent   = 'Caso #' + c.id + ' — Serie I';
+  }
+
+  // ── LAUNCH ──
+  function launchCase() {
+    const conf = DIFF[G.diff];
+    const c    = CASES[G.caseIndex % CASES.length];
+    G.unlockedClues = conf.start;
+    G.timerSec = 0;
+    G.finalTime = 0;
+    clearInterval(G.timerInterval);
+
+    document.getElementById('c-file-num').textContent = 'CASO #' + c.id;
+    document.getElementById('c-title').textContent    = c.title;
+    const pill = document.getElementById('c-diff-pill');
+    pill.textContent = conf.label; pill.className = 'diff-pill-sm ' + conf.pill;
+
+    const td = document.getElementById('timer-display');
+    td.className = 'timer-pill ' + conf.tc;
+    document.getElementById('timer-dot').className = 'timer-dot ' + conf.td;
+
+    renderCaseDesc(c);
+    renderEvidence(c);
+    updateClueBtn();
+    showView('case');
+
+    G.timerInterval = setInterval(() => {
+      G.timerSec++;
+      document.getElementById('timer-text').textContent = fmt(G.timerSec);
+      if (G.diff === 'hard' && G.timerSec === 600) toast('⚠ Dieci minuti. Concentrate le ipotesi.');
+    }, 1000);
+  }
+
+  function renderCaseDesc(c) {
+    document.getElementById('c-desc').innerHTML = c.paragraphs.map(p => `<p>${p}</p>`).join('');
+  }
+
+  function renderEvidence(c) {
+    const el = document.getElementById('ev-list');
+    el.innerHTML = '';
+    c.clues.forEach((clue, i) => {
+      const card = document.createElement('div');
+      card.id = 'ev-card-' + i;
+      if (i < G.unlockedClues) {
+        card.className = 'ev-open';
+        card.innerHTML = `
+          <div class="ev-badge">${LETTERS[i]}</div>
+          <div class="ev-open-body">
+            <div class="ev-open-label"><i class="bi ${clue.icon}"></i>${clue.label}</div>
+            <div class="ev-open-text">${clue.text}</div>
+          </div>`;
+      } else {
+        card.className = 'ev-sealed';
+        card.innerHTML = `
+          <i class="bi bi-lock-fill ev-sealed-icon"></i>
+          <div class="ev-sealed-body">
+            <div class="ev-sealed-num">Reperto ${LETTERS[i]} — Sigillato</div>
+            <div class="ev-sealed-text">Prova sigillata. Richiedi l'indizio per aprirla.</div>
+          </div>
+          <div class="ev-sealed-stamp">Sealed</div>`;
+      }
+      el.appendChild(card);
+    });
+    updateEvCount(c);
+  }
+
+  function updateEvCount(c) {
+    document.getElementById('ev-count').textContent = `${G.unlockedClues} / ${c.clues.length} sbloccate`;
+  }
+
+  // ── CLUE REVEAL ──
+  function revealNextClue() {
+    const c = CASES[G.caseIndex % CASES.length];
+    if (G.unlockedClues >= c.clues.length) return;
+    const idx  = G.unlockedClues;
+    const clue = c.clues[idx];
+    G.unlockedClues++;
+
+    const card = document.getElementById('ev-card-' + idx);
+    card.className = 'ev-open';
+    card.innerHTML = `
+      <div class="ev-badge">${LETTERS[idx]}</div>
+      <div class="ev-open-body">
+        <div class="ev-open-label"><i class="bi ${clue.icon}"></i>${clue.label}</div>
+        <div class="ev-open-text">${clue.text}</div>
+      </div>`;
+
+    updateClueBtn();
+    updateEvCount(c);
+    document.getElementById('case-body').scrollTo({ top: 9999, behavior: 'smooth' });
+    if (G.unlockedClues >= c.clues.length) toast('Tutte le prove sono state rivelate.');
+  }
+
+  function updateClueBtn() {
+    const c   = CASES[G.caseIndex % CASES.length];
+    const rem = c.clues.length - G.unlockedClues;
+    const btn = document.getElementById('clue-btn');
+    const lbl = document.getElementById('clue-remaining');
+    if (rem <= 0) {
+      btn.classList.add('exhausted');
+      lbl.textContent = 'Tutte rivelate';
+    } else {
+      btn.classList.remove('exhausted');
+      lbl.textContent = rem + (rem === 1 ? ' rimasta' : ' rimaste');
+    }
+  }
+
+  // ── CANCEL ──
+  function showCancelConfirm() {
+    document.getElementById('cancel-timer-display').innerHTML = `<i class="bi bi-clock"></i> Tempo trascorso: ${fmt(G.timerSec)}`;
+    document.getElementById('cancel-overlay').style.display = 'flex';
+  }
+  function dismissCancelConfirm() { document.getElementById('cancel-overlay').style.display = 'none'; }
+  function confirmCancel() {
+    clearInterval(G.timerInterval);
+    closeReaderSolution();
+    dismissCancelConfirm();
+    showView('difficulty');
+  }
+
+  // ── READER OVERLAY ──
+  let roInterval = null;
+
+  function openReaderSolution() {
+    const c = CASES[G.caseIndex % CASES.length];
+    document.getElementById('ro-case-title').textContent = c.title;
+    document.getElementById('ro-solution-text').textContent = c.solution;
+    document.getElementById('ro-timer').innerHTML = `<i class="bi bi-clock"></i> ${fmt(G.timerSec)}`;
+    document.getElementById('reader-overlay').style.display = 'flex';
+    roInterval = setInterval(() => {
+      document.getElementById('ro-timer').innerHTML = `<i class="bi bi-clock"></i> ${fmt(G.timerSec)}`;
+    }, 1000);
+  }
+
+  function closeReaderSolution() {
+    clearInterval(roInterval);
+    document.getElementById('reader-overlay').style.display = 'none';
+  }
+
+  // ── COMPLETE ──
+  function completedCase() {
+    clearInterval(G.timerInterval);
+    G.finalTime = G.timerSec;
+    const cluesUsed = G.unlockedClues - DIFF[G.diff].start;
+    const score     = calcScore(G.finalTime, cluesUsed, G.diff);
+    const s         = SCORES[Math.max(0, Math.min(4, 4 - score))];
+    const c         = CASES[G.caseIndex % CASES.length];
+    completedCasesData[c.id] = { timeStr: fmt(G.finalTime), stars: s.stars, cluesUsed, diff: DIFF[G.diff].label };
+    buildReveal(s, cluesUsed);
+    showView('reveal');
+  }
+
+  function buildReveal(s, cluesUsed) {
+    const timeStr = fmt(G.finalTime);
+    document.getElementById('rv-time').textContent      = timeStr;
+    document.getElementById('rv-stars').textContent     = s.stars;
+    document.getElementById('rv-title').textContent     = s.title;
+    document.getElementById('rv-title').className       = 'rv-title ' + s.cls;
+    document.getElementById('rv-sub').textContent       = s.sub;
+    document.getElementById('rv-solution').textContent  = CASES[G.caseIndex % CASES.length].solution;
+    document.getElementById('rv-stat-time').textContent = timeStr;
+    document.getElementById('rv-stat-clues').textContent = cluesUsed + ' / 3';
+    document.getElementById('rv-stat-diff').textContent = DIFF[G.diff].label;
+  }
+
+  function calcScore(sec, clues, diff) {
+    let p = 4;
+    if (sec > 1800) p -= 2; else if (sec > 900) p -= 1;
+    p -= clues;
+    if (diff === 'hard') p = Math.min(p + 1, 4);
+    if (diff === 'easy') p = Math.min(p, 3);
+    return Math.max(0, Math.min(4, p));
+  }
+
+  // ── CASES LIBRARY ──
+  function openCasesView() { renderCasesView(); showView('cases'); }
+
+  function renderCasesView() {
+    const list = document.getElementById('cases-list');
+    list.innerHTML = '';
+    const done = Object.keys(completedCasesData).length;
+    document.getElementById('cases-stats-header').innerHTML =
+      `<span class="csb-label"><i class="bi bi-trophy" style="margin-right:4px;"></i>Progressi</span><span class="csb-val">${done} di ${CASES.length} completati</span>`;
+
+    CASES.forEach((c, idx) => {
+      const d      = completedCasesData[c.id];
+      const teaser = c.paragraphs[0].split('.')[0] + '.';
+      const card   = document.createElement('div');
+      card.className = 'case-lib-card' + (d ? ' done' : '');
+      card.innerHTML = `
+        <div class="cl-top">
+          <span class="cl-num"><i class="bi bi-file-earmark-text" style="margin-right:4px;"></i>Caso #${c.id}</span>
+          <span class="cl-badge ${d ? 'cl-badge-done' : 'cl-badge-todo'}">${d ? '<i class="bi bi-check-circle-fill" style="margin-right:3px;"></i>Completato' : 'Non giocato'}</span>
+        </div>
+        <div class="cl-title">${c.title}</div>
+        <div class="cl-teaser">${teaser}</div>
+        <div class="cl-bottom">
+          <div class="cl-result">${d
+            ? `<span class="cl-time"><i class="bi bi-clock"></i>${d.timeStr}</span><span class="cl-stars">${d.stars}</span><span class="cl-diff">${d.diff}</span>`
+            : `<span style="font-size:0.75rem; color:var(--muted);">—</span>`
+          }</div>
+          <div class="cl-play" onclick="launchFromLibrary(${idx})">
+            <i class="bi bi-folder2-open"></i> ${d ? 'Rigioca' : 'Gioca'}
+          </div>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  function launchFromLibrary(idx) { G.caseIndex = idx; updateCasePreview(); showView('difficulty'); }
+
+  // ── NEXT / HOME ──
+  function nextCase() { G.caseIndex = (G.caseIndex + 1) % CASES.length; updateCasePreview(); showView('difficulty'); }
+  function goHome()   { G.caseIndex = (G.caseIndex + 1) % CASES.length; updateCasePreview(); showView('home'); }
+
+  // ── UTILS ──
+  function fmt(s) { return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); }
+
+  let toastTimer;
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+  }
+
+  updateCasePreview();
+</script>
 </body>
 </html>
